@@ -71,6 +71,7 @@ echo "Syncing completed. . . Converting that SVN repo to GIT"
 echo "Detecting users"
 authors=$(svn log ${SVN_REPO} | grep -E "r[0-9]+.*" | cut -d '|' -f 2 | sort -u)
 echo "Converting them to git compatible users"
+[ -f "usernames.txt" ] && rm usernames.txt
 touch usernames.txt
 for author in $authors; do
     cantarusUsername2GitUser $author >>usernames.txt
@@ -87,3 +88,4 @@ mv tmp_svn "$(basename ${SVN_REPO})".git
 echo "$(pwd)/$(basename ${SVN_REPO}).git"
 echo "Cleaning up"
 rm -rf "$(dirname ${SVN_TEST_DIR})"
+rm usernames.txt

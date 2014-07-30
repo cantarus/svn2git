@@ -1,6 +1,6 @@
 #!/bin/bash
 showHelp() {
-    echo "Usage: svn2git.sh -s|--svn SVN_REPO_URL -g|--git GIT_REPO_URL"
+    echo "Usage: svn2git.sh -s|--svn SVN_REPO_URL"
     echo "-------------------------------------------------------------"
     echo 
     echo "Create a new and empty git repository on a remote server. Run this script"
@@ -8,6 +8,22 @@ showHelp() {
     echo "If you don't provide a remote git repository address the git repo will stay locally"
 
 }
+
+cantarusUsername2GitUser() {
+    username=$1
+    if [ -z "$(echo $username | grep '-')" ]; then
+        echo "$username = $username <${username}@uknown>"
+    else
+        name=$(echo $username | cut -d '-' -f 1)
+        Name=$(tr '[:lower:]' '[:upper:]' <<< ${name:0:1})${name:1}
+        lastname=$(echo $username | cut -d '-' -f 2)
+        Lastname=$(tr '[:lower:]' '[:upper:]' <<< ${lastname:0:1})${lastname:1}
+        email="${name}.${lastname}@cantarus.com"
+        echo "$username = $Name $Lastname <${email}>"
+    fi
+
+}
+
 if [ "$#" -le "1" ]; then
     showHelp
     exit 1
@@ -52,7 +68,15 @@ svnsync sync "file://${SVN_TEST_DIR}" || {
 
 echo "Syncing completed. . . Converting that SVN repo to GIT"
 
-git svn clone "file://${SVN_TEST_DIR}" -T trunk -b branches -t tags || {
+echo "Detecting users"
+authors=$(svn log ${SVN_REPO} | grep -E "r[0-9]+.*" | cut -d '|' -f 2 | sort -u)
+echo "Converting them to git compatible users"
+touch usernames.txt
+for author in $authors; do
+    cantarusUsername2GitUser $author >>usernames.txt
+done
+echo "Cloning with svn port"
+git svn clone "file://${SVN_TEST_DIR}" -T trunk -b branches -t tags --authors-file="usernames.txt" --prefix=origin/ || {
 
     echo "Error. Check line 58, maybe that SVN repo did not follow the default naming convensions"
     exit 1

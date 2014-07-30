@@ -78,10 +78,12 @@ done
 echo "Cloning with svn port"
 git svn clone "file://${SVN_TEST_DIR}" -T trunk -b branches -t tags --authors-file="usernames.txt" --prefix=origin/ || {
 
-    echo "Error. Check line 58, maybe that SVN repo did not follow the default naming convensions"
+    echo "Try to clean /tmp folder and try again"
     exit 1
 }
 
-echo "Moving you to your new repository"
+echo "Git repository:"
 mv tmp_svn "$(basename ${SVN_REPO})".git
-cd "$(basename ${SVN_REPO}).git"
+echo "$(pwd)/$(basename ${SVN_REPO}).git"
+echo "Cleaning up"
+rm -rf "$(dirname ${SVN_TEST_DIR})"

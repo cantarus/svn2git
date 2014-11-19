@@ -1,6 +1,6 @@
 #!/bin/bash
 showHelp() {
-    echo "Usage: svn2git.sh -s|--svn SVN_REPO_URL"
+    echo "Usage: svn2git.sh -s|--svn SVN_REPO_URL [-c|--conversion STANDARD OTHER] [-e|--emaildomain mail.com]"
     echo "-------------------------------------------------------------"
     echo 
     echo "Create a new and empty git repository on a remote server. Run this script"
@@ -9,16 +9,19 @@ showHelp() {
 
 }
 
+DEFAULT_EMAIL="cantarus.com"
+SVNCONVERSION="STANDARD"
+
 cantarusUsername2GitUser() {
     username=$1
     if [ -z "$(echo $username | grep '-')" ]; then
-        echo "$username = $username <${username}@uknown>"
+        echo "$username = $username <${username}@${DEFAULT_EMAIL}>"
     else
         name=$(echo $username | cut -d '-' -f 1)
         Name=$(tr '[:lower:]' '[:upper:]' <<< ${name:0:1})${name:1}
         lastname=$(echo $username | cut -d '-' -f 2)
         Lastname=$(tr '[:lower:]' '[:upper:]' <<< ${lastname:0:1})${lastname:1}
-        email="${name}.${lastname}@cantarus.com"
+        email="${name}.${lastname}@${DEFAULT_EMAIL}"
         echo "$username = $Name $Lastname <${email}>"
     fi
 
@@ -39,6 +42,14 @@ while [[ $# > 1 ]]; do
         ;;
         -g|--git)
         GIT_REPO="$1"
+        shift
+        ;;
+        -e|--emaildomain)
+        DEFAULT_EMAIL="$1"
+        shift
+        ;;
+        -c|--conversion)
+        SVNCONVERSION="$1"
         shift
         ;;
         *|\?)
@@ -76,13 +87,22 @@ touch usernames.txt
 for author in $authors; do
     cantarusUsername2GitUser $author >>usernames.txt
 done
+echo "Press enter to review usernames"
+nano usernames.txt
 echo "Cloning with svn port"
-git svn clone "file://${SVN_TEST_DIR}" -T trunk -b branches -t tags --authors-file="usernames.txt" --prefix=origin/ || {
+if [ "$SVNCONVERSION" = "STANDARD" ]; then
+    git svn clone "file://${SVN_TEST_DIR}" -T trunk -b branches -t tags --authors-file="usernames.txt" --prefix=origin/ || {
 
-    echo "Try to clean /tmp folder and try again"
-    exit 1
-}
+        echo "Try to clean /tmp folder and try again"
+        exit 1
+    }
+else 
+    git svn clone "file://${SVN_TEST_DIR}" --authors-file="usernames.txt" --prefix=origin/ || {
 
+        echo "Try to clean /tmp folder and try again"
+        exit 1
+    }
+fi
 echo "Git repository:"
 mv tmp_svn "$(basename ${SVN_REPO})".git
 echo "$(pwd)/$(basename ${SVN_REPO}).git"

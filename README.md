@@ -5,6 +5,6 @@ to clone an svn repository into a git repository and upload it on the server.
 
 Usage
 -----
-svn2git.sh -s|--svn SVN_REPO_URL [-c|--conversion STANDARD OTHER] [-e|--emaildomain mail.com]
+svn2git.sh -s|--svn SVN_REPO_URL [-c|--conversion STANDARD|OTHER] [-e|--emaildomain mail.com]
 
 
